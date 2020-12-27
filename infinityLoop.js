@@ -49,13 +49,16 @@ setInterval(async () => {
                 await charging(data);
             } else if (node.user_config.isV2G) {
                 // node.user_config.v2g.dRate,
-                await v2g(
-                    node.curr_soc,
-                    tot_dRate,
-                    node._id,
-                    node.user_config.v2g.count,
-                    node);
-
+                var curTime = moment().tz("Asia/Colombo");
+                var setTime = moment().set("hour", 18).set("minute", 30);
+                if (curTime > setTime) {
+                    await v2g(
+                        node.curr_soc,
+                        tot_dRate,
+                        node._id,
+                        node.user_config.v2g.count,
+                        node);
+                }
             }
         } else {
             console.log("Send " + node._id + " Websocket");
