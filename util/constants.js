@@ -1,0 +1,10 @@
+module.exports = Object.freeze({
+    D_RATE: 6,
+    DIS_RATE:3,
+    CHARGING_MODE_NORMAL: 'NORMAL',
+    CHARGING_MODE_BUDGET: 'BUDGET',
+    CHARGING_MODE_ECO: 'ECO',
+    STATUS_PAUSE: 'PAUSE',
+    STATUS_PLAY: 'PLAY',
+    STATUS_STOP: 'STOP',
+});
