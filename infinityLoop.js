@@ -34,6 +34,7 @@ setInterval(async () => {
     var Nodes = await NodeModel.find({ 'isGoing': true });
 
     Nodes.forEach(async (node) => {
+console.log(node._id);
         if (node.user_config) {
             if (node.user_config.isCharging) {
                 var data = {
@@ -41,7 +42,8 @@ setInterval(async () => {
                     dRate: node.user_config.charging.dRate,
                     t_ds: node.user_config.charging.t_ds,
                     curr_soc: node.curr_soc,
-                    node_id: node._id
+                    node_id: node._id,
+			status:node.status
                 }
 
                 console.log(node._id);
@@ -71,7 +73,7 @@ setInterval(async () => {
 
 
 
-}, 1 * 1000);
+}, 60 * 1000);
 
 
 
@@ -82,13 +84,16 @@ async function charging(data) {
 
     if (curr_soc < 80) {
         if (charging_mode == constants.CHARGING_MODE_NORMAL) {
-            if (node.status == constants.STATUS_PLAY) { normalCharging(data); }
+console.log("NORMAL");         
+console.log(data.status);
+   if (data.status == constants.STATUS_PLAY) {console.log("NORMAL STARTED"); normalCharging(data); }
 
         } else if (charging_mode == constants.CHARGING_MODE_BUDGET) {
             var curTime = moment().tz("Asia/Colombo");
             var setTime = moment().set("hour", 22).set("minute", 30);
             if (curTime > setTime) {
-                if (node.status == constants.STATUS_PLAY) { normalCharging(data); }
+console.log("BUDGET");
+                if (data.status == constants.STATUS_PLAY) { console.log("BUDGET STARTED");normalCharging(data); }
             }
         } else if (charging_mode == constants.CHARGING_MODE_ECO) {
             console.log("ECO");
@@ -98,7 +103,7 @@ async function charging(data) {
             var curTime = moment().tz("Asia/Colombo");
             if (curTime > pauseAt && curTime < peakStartAt) {
                 ///// set status to pause
-
+console.log("ECO SET STATUS PAUSE");
                 var updatedNode = await NodeModel.updateOne(
                     { _id: date._id },
                     {
@@ -112,6 +117,7 @@ async function charging(data) {
 
 
             } else if (curr_soc > endAt) {
+console.log("ECO SET STATUS STOP");
                 ///////set status and is going false
                 var updatedNode = await NodeModel.updateOne(
                     { _id: date._id },
@@ -125,6 +131,7 @@ async function charging(data) {
 
 
             } else {
+console.log("ECO");
                 var updatedNode = await NodeModel.updateOne(
                     { _id: date._id },
                     {
@@ -134,7 +141,7 @@ async function charging(data) {
                     });
 
                 console.log(updatedNode);
-                if (node.status == constants.STATUS_PLAY) { normalCharging(data); }
+                if (node.status == constants.STATUS_PLAY) { console.log("ECO STARTED"); normalCharging(data); }
             }
 
 
