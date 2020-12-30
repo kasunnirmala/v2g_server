@@ -43,9 +43,9 @@ console.log(node._id);
                     t_ds: node.user_config.charging.t_ds,
                     curr_soc: node.curr_soc,
                     node_id: node._id,
-                    PauseAt: data.user_config.charging.PauseAt,
-                    PeakStartAt: data.user_config.charging.PeakStartAt,
-                    t_out_time: data.user_config.t_out_time,
+                    PauseAt: node.user_config.charging.PauseAt,
+                    PeakStartAt: node.user_config.charging.PeakStartAt,
+                    t_out_time: node.user_config.t_out_time,
 			        status:node.status
                 }
 
