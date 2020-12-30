@@ -119,7 +119,7 @@ console.log("ECO SET STATUS PAUSE");
 
 
 
-            } else if (curr_soc > endAt) {
+            } else if (curTime > endAt) {
 console.log("ECO SET STATUS STOP");
                 ///////set status and is going false
                 var updatedNode = await NodeModel.updateOne(
@@ -163,6 +163,9 @@ async function normalCharging(data) {
     var endAt = moment(data.t_out_time).tz("Asia/Colombo");
     var curTime = moment().tz("Asia/Colombo");
 
+console.log(endAt);
+console.log(curTime);
+console.log(soc > 80 || curTime > endAt);
     var soc = ((curr_soc * 40 / 100) + (cRate / 60)) * 100 / 40;
 
     const Recursive = new RecursiveModel({
@@ -185,8 +188,8 @@ async function normalCharging(data) {
                 $set: {
                     curr_soc: soc,
                     end_time: moment().tz("Asia/Colombo"),
-                    isGoing: soc > 80 || curr_soc > endAt ? false : true,
-                    status: soc > 80 || curr_soc > endAt ? constants.STATUS_STOP : constants.STATUS_PLAY
+                    isGoing: soc > 80 || curTime > endAt ? false : true,
+                    status: soc > 80 || curTime > endAt ? constants.STATUS_STOP : constants.STATUS_PLAY
                 }
             });
 
