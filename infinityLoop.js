@@ -21,7 +21,7 @@ setInterval(async () => {
 
 
     var tot_available = count * 0.6;
-    var tot_tso = tot_available - 5;
+    var tot_tso = tot_available - tot_available*0.05;
     var tot_dRate = count == 0 ? 0 : tot_tso / count;
 
 
@@ -41,7 +41,10 @@ setInterval(async () => {
                     dRate: node.user_config.charging.dRate,
                     t_ds: node.user_config.charging.t_ds,
                     curr_soc: node.curr_soc,
-                    node_id: node._id
+                    node_id: node._id,
+                    PauseAt: data.user_config.charging.PauseAt,
+                    PeakStartAt: data.user_config.charging.PeakStartAt,
+                    t_out_time: data.user_config.t_out_time,
                 }
 
                 console.log(node._id);
@@ -92,9 +95,9 @@ async function charging(data) {
             }
         } else if (charging_mode == constants.CHARGING_MODE_ECO) {
             console.log("ECO");
-            var pauseAt = moment(data.user_config.charging.PauseAt).tz("Asia/Colombo");
-            var peakStartAt = moment(data.user_config.charging.PeakStartAt).tz("Asia/Colombo");
-            var endAt = moment(data.user_config.t_out_time).tz("Asia/Colombo");
+            var pauseAt = moment(data.PauseAt).tz("Asia/Colombo");
+            var peakStartAt = moment(data.PeakStartAt).tz("Asia/Colombo");
+            var endAt = moment(data.t_out_time).tz("Asia/Colombo");
             var curTime = moment().tz("Asia/Colombo");
             if (curTime > pauseAt && curTime < peakStartAt) {
                 ///// set status to pause
@@ -150,7 +153,8 @@ async function normalCharging(data) {
     var cRate = data.dRate;
     var curr_soc = data.curr_soc;
     var node_id = data.node_id;
-
+    var endAt = moment(data.t_out_time).tz("Asia/Colombo");
+    var curTime = moment().tz("Asia/Colombo");
 
     var soc = ((curr_soc * 40 / 100) + (cRate / 60)) * 100 / 40;
 
@@ -174,8 +178,8 @@ async function normalCharging(data) {
                 $set: {
                     curr_soc: soc,
                     end_time: moment().tz("Asia/Colombo"),
-                    isGoing: soc > 80 ? false : true,
-                    status: soc > 80 ? constants.STATUS_STOP : constants.STATUS_PLAY
+                    isGoing: soc > 80 || curr_soc > endAt ? false : true,
+                    status: soc > 80 || curr_soc > endAt ? constants.STATUS_STOP : constants.STATUS_PLAY
                 }
             });
 
@@ -196,10 +200,17 @@ async function v2g(curr_soc, dRate, node_id, count, data) {
     var isCharging = false;
     var isv2g = true;
     var charging = null;
+
+    var curTime = moment().tz("Asia/Colombo");
+    var setTime = moment(data.user_config.t_in_time).add(+1, 'hour').set("hour", 2);
+    var startAt = moment(data.user_config.t_in_time);
+    var endAt = moment(data.user_config.t_out_time);
+
+
     if (count == 15) {
         count = 1;
 
-        if ((soc_new - 40) * 0.4 / 0.75 < 1) {
+        if ((soc_new - 40) * 0.4 / 0.75 < 1 || curTime > setTime) {
             charging = new ChargingModel({
                 charging_mode: constants.CHARGING_MODE_BUDGET,
                 dRate: constants.D_RATE,
@@ -215,6 +226,8 @@ async function v2g(curr_soc, dRate, node_id, count, data) {
 
 
 
+
+
     var updatedNode = await NodeModel.updateOne(
         { _id: node_id },
         {
@@ -225,7 +238,7 @@ async function v2g(curr_soc, dRate, node_id, count, data) {
                 'user_config.isV2G': isv2g,
                 'user_config.isCharging': isCharging,
                 'user_config.charging': charging,
-                status: soc_new > 80 ? constants.STATUS_STOP : constants.STATUS_PLAY,
+                status: soc_new > 80 || curTime > endAt ? constants.STATUS_STOP : constants.STATUS_PLAY,
                 'user_config.v2g.dRate': dRate,
                 'user_config.v2g.count': count,
 
